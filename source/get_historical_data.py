@@ -18,7 +18,8 @@ def symbol_to_path(symbol, base_dir='data'):
 
 def get_data(symbols, dates, columns=['Adj Close']):
     """
-    Read stock data for given symbols, given columns and given dates from CSV files.
+    Read stock data for given symbols, given columns and given dates
+    from CSV files.
     :param symbols: symbols to get data for
     :param columns: columns to get data for
     :param dates: date range
@@ -30,7 +31,8 @@ def get_data(symbols, dates, columns=['Adj Close']):
 
     for symbol in TICKERS:
         # Join the 2 dataframes
-        df_tmp = get_data_from_csv(symbol, columns).rename(columns={'Adj Close': symbol})
+        df_tmp = get_data_from_csv(symbol, columns)\
+            .rename(columns={'Adj Close': symbol})
         df = df.join(df_tmp, how='inner')
         if symbol == SP500:
             df = df.dropna(subset=[SP500])
@@ -38,7 +40,7 @@ def get_data(symbols, dates, columns=['Adj Close']):
     return df
 
 
-def get_data_from_csv(symbol, columns):
+def get_data_from_csv(symbol, columns=['Adj Close']):
     """
     Returns the content of the CSV file from the stock indicated by symbol.
 
@@ -96,12 +98,13 @@ def test_run():
     df = get_data(TICKERS, dates)
     print(df)
 
+    # columns = ['Close', 'High', 'Low', 'Volume']
     # for symbol in TICKERS:
-    #     df = get_data_from_csv(symbol)
+    #     df = get_data_from_csv(symbol, columns)
     #     print(symbol)
     #     print('Max close = {}'.format(get_max_close(df)))
     #     print('Mean volume = {}'.format(get_mean_volume(df)))
-    #     plot_data(symbol, df, ['Close', 'High', 'Low'])
+    #     plot_data(symbol, df, columns)
 
 
 if __name__ == '__main__':
