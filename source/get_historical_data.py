@@ -11,6 +11,7 @@ IBM = 'IBM'
 SP500 = 'SPY'
 
 SYMBOLS = [AAPLE, AMD, GOLD, GOOGLE, IBM]
+DEFAULT_COLUMN = 'Adj Close'
 
 
 def symbol_to_path(symbol, base_dir='data'):
@@ -23,7 +24,7 @@ def symbol_to_path(symbol, base_dir='data'):
     return os.path.join(base_dir, '{}.csv'.format(symbol))
 
 
-def get_data(symbols, dates, columns=['Adj Close']):
+def get_data(symbols, dates, columns=DEFAULT_COLUMN):
     """
     Read stock data for given symbols, given columns and given dates
     from CSV files.
@@ -47,7 +48,7 @@ def get_data(symbols, dates, columns=['Adj Close']):
     return df
 
 
-def get_data_from_csv(symbol, columns=['Adj Close']):
+def get_data_from_csv(symbol, columns=DEFAULT_COLUMN):
     """
     Returns the content of the CSV file from the stock indicated by symbol.
 
@@ -56,6 +57,9 @@ def get_data_from_csv(symbol, columns=['Adj Close']):
     :param symbol: symbol of the stock to read data from
     :return:    a Pandas DataFrame
     """
+    if not isinstance(columns, list):
+        columns = [columns]
+
     if 'Date' not in columns:
         columns.insert(0, 'Date')
 
