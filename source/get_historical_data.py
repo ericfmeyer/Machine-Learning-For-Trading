@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 AAPLE = 'AAPL'
 AMD = 'AMD'
 GOLD = 'GLD'
@@ -38,7 +37,6 @@ def get_data(symbols, dates, columns=DEFAULT_COLUMN):
         symbols.insert(0, SP500)
 
     for symbol in symbols:
-        # Join the 2 dataframes
         df_tmp = get_data_from_csv(symbol, columns)\
             .rename(columns={'Adj Close': symbol})
         df = df.join(df_tmp, how='inner')
@@ -85,17 +83,32 @@ def get_max_close(data):
     return data['Close'].max()
 
 
-def plot_data(df, title='Stock prices'):
+def plot_data(list_df, labels, title='Stock prices'):
     """
     Plots the data contained in the dataframe.
-    :param df: dataframe to plot
+    :param list_df: list of dataframes to plot
+    :param labels: labels to use for each values
     :param title: title of the plot chart
     :return: nothing
     """
-    ax = df.plot(title=title, fontsize=10)
+    ax = list_df[0].plot(title=title, fontsize=10, label=labels[0])
+    for i, data in enumerate(list_df[1:]):
+        data.plot(label=labels[i + 1], ax=ax)
     ax.set_xlabel('Date')
     ax.set_ylabel('Price')
+    ax.legend(loc='upper left')
     plt.show()
+
+
+def plot_mean(df, window=20):
+    """
+    Plots the values and the mean over the specified window.
+    :param df: dataframe containing all the values
+    :param window: the time window
+    :return: nothing
+    """
+    rm = get_rolling_mean(df, window)
+    plot_data([df, rm], labels=[df.name, 'Rolling mean ({})'.format(window)], title='Rolling mean')
 
 
 def plot_selected(df, columns, start_index, end_index):
@@ -119,28 +132,71 @@ def normalize_data(df):
     return df/df.ix[0]
 
 
+def get_rolling_mean(values, window=20):
+    """
+    Returns the rolling mean of given values, using given window size.
+    :param values: Pandas dataframe with values
+    :param window: size of the window (int)
+    :return: rolling mean
+    """
+    return values.rolling(window).mean()
+
+
+def get_rolling_std(values, window=20):
+    """
+    Returns the rolling standard deviation of given values, using given window size.
+    :param values: Pandas dataframe with values
+    :param window: size of the window (int)
+    :return: rolling standard deviation
+    """
+    return values.rolling(window).std()
+
+
+def get_bollinger_bands(rm, rstd):
+    """
+    Return upper and lower Bollinger Bands.
+    :param rm: rolling mean values
+    :param rstd: rolling standard deviation values
+    :return: upper and lower bands
+    """
+    upper = rm + 2 * rstd
+    lower = rm - 2 * rstd
+    return upper, lower
+
+
+def get_daily_returns(df):
+    daily_returns = (df / df.shift(1)) - 1
+    print(daily_returns.head())
+    # daily_returns.ix[0, :] = 0
+    print(daily_returns.head())
+    return daily_returns
+
+
 def test_run():
     # Define the date range
-    start_date = '2010-01-01'
-    end_date = '2010-12-31'
+    start_date = '2012-01-01'
+    end_date = '2012-12-31'
+
     dates = pd.date_range(start_date, end_date)
-
     df = get_data(SYMBOLS, dates)
-    print(df)
 
-    # row slicing using DataFrame.ix[] selector
-    # print(df.ix[start_date:'2010-01-31'])
+    rolling_mean = get_rolling_mean(df[SP500])
+    rolling_std = get_rolling_std(df[SP500])
 
-    # slice by column (symbol)
-    # print(df['SPY'])
-    # print(df[['SPY', 'AAPL']])
+    upper, lower = get_bollinger_bands(rolling_mean, rolling_std)
 
-    # slice by row and column
-    # print(df.ix['2010-03-10':'2010-03-15', ['SPY', 'AMD']])
+    plot_data([df[SP500], rolling_mean, upper, lower], labels=[SP500, 'Rolling mean', 'Upper band', 'Lower band'])
+    # plot_mean(df[SP500], window=26)
 
-    plot_data(df)
-    plot_selected(df, [SP500, GOOGLE, IBM, GOLD], start_date, end_date)
-    plot_data(normalize_data(df))
+    daily_returns = get_daily_returns(df[SP500])
+    plot_data([daily_returns], 'Daily Returns')
+
+    # print("Mean: ", df.mean())
+    # print("Median: ", df.median())
+    # print("Std: ", df.std())
+
+    # plot_selected(df, [SP500, GOOGLE, IBM, GOLD], start_date, end_date)
+    # plot_data(normalize_data(df))
 
 
 if __name__ == '__main__':
